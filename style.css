@@ -1,39 +1,84 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f4f9;
-    margin: 0;
-    padding: 0;
+const robotsDB = {
+    ev3: [
+        { name: "Следящий по линии", sensors: { color: 1 }, motors: 2 },
+        { name: "Ультразвуковой слежение", sensors: { ultrasonic: 1 }, motors: 2 },
+        { name: "Балансироующий робот", sensors: { gyro: 1 }, motors: 2 },
+        { name: "Манипулятор", sensors: { color: 1, ultrasonic: 1 }, motors: 3 },
+        { name: "Автостоп", sensors: { color: 2, ultrasonic: 1 }, motors: 2 }
+    ],
+    spike: [
+        { name: "Робот с компьютерным зрением", sensors: { color: 1 }, motors: 2 },
+        { name: "Экскаватор на датчиках", sensors: { ultrasonic: 1, color: 1 }, motors: 3 },
+        { name: "Робот-качели", sensors: { gyro: 1 }, motors: 2 },
+        { name: "Тележка с автоматическим торможением", sensors: { ultrasonic: 1 }, motors: 2 },
+        { name: "Робот с реактивным управлением", sensors: { color: 2, ultrasonic: 1, gyro: 1 }, motors: 3 }
+    ]
+};
+
+document.getElementById("registrationForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    document.getElementById("register").classList.add("hidden");
+    document.getElementById("chooseKit").classList.remove("hidden");
+});
+
+function showParts() {
+    document.getElementById("chooseKit").classList.add("hidden");
+    document.getElementById("enterParts").classList.remove("hidden");
 }
 
-.container {
-    width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+function suggestRobots() {
+    const kit = document.getElementById("kitSelector").value;
+
+    const parts = {
+        ultrasonic: parseInt(document.getElementById("ultrasonic").value) || 0,
+        color: parseInt(document.getElementById("color").value) || 0,
+        gyro: parseInt(document.getElementById("gyro").value) || 0,
+        motors: parseInt(document.getElementById("motors").value) || 0
+    };
+
+    const availableRobots = robotsDB[kit].filter(robot => {
+        let canBuild = true;
+
+        for (const [sensorType, count] of Object.entries(robot.sensors)) {
+            if (parts[sensorType] < count) {
+                canBuild = false;
+                break;
+            }
+        }
+
+        if (canBuild && robot.motors <= parts.motors) {
+            return true;
+        }
+
+        return false;
+    });
+
+    // Сортировка: самые комплексные (много датчиков и моторов)
+    availableRobots.sort((a, b) => {
+        const aTotal = Object.values(a.sensors).reduce((sum, v) => sum + v, 0) + a.motors;
+        const bTotal = Object.values(b.sensors).reduce((sum, v) => sum + v, 0) + b.motors;
+        return bTotal - aTotal;
+    });
+
+    const list = document.getElementById("robotList");
+    list.innerHTML = "";
+
+    if (availableRobots.length === 0) {
+        list.innerHTML = "<li>Нет подходящих роботов для сборки.</li>";
+    } else {
+        availableRobots.forEach(robot => {
+            const li = document.createElement("li");
+            const reqs = Object.entries(robot.sensors).map(([t, c]) => `${t}: ${c}`).join(', ');
+            li.textContent = `${robot.name} (требуется: ${reqs}, моторы: ${robot.motors})`;
+            list.appendChild(li);
+        });
+    }
+
+    document.getElementById("enterParts").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
 }
 
-.hidden {
-    display: none;
-}
-
-input, select, button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    box-sizing: border-box;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-button {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #357ab8;
+function goBack() {
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("enterParts").classList.remove("hidden");
 }
