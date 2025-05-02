@@ -1,0 +1,29 @@
+import { useNavigate } from "react-router-dom";
+
+const robots = [
+  { id: 1, name: "Марсоход", requiredParts: 100, level: "Сильный" },
+  { id: 2, name: "Сортировщик", requiredParts: 70, level: "Средний" },
+  { id: 3, name: "Лабиринт", requiredParts: 50, level: "Лёгкий" },
+];
+
+export default function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
+
+  const available = robots.filter(r => r.requiredParts <= user.parts);
+
+  return (
+    <div className="p-6">
+      <h2 className="text-xl mb-4">Доступные роботы для сборки:</h2>
+      <ul>
+        {available.map(robot => (
+          <li key={robot.id} className="mb-2">
+            <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={() => navigate(`/robot/${robot.id}`)}>
+              {robot.name} – {robot.level}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
